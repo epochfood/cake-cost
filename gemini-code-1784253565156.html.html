@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>烘焙教室專用 - 蛋糕成本計算器</title>
+    <style>
+        :root {
+            --primary: #8C6239;
+            --secondary: #F5EBE6;
+            --accent: #E28F6B;
+            --text: #4A3E3D;
+            --border: #D1C2BD;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text);
+        }
+
+        body {
+            background-color: #FAF6F0;
+            padding: 16px;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-bottom: 4px solid var(--primary);
+        }
+
+        header h1 {
+            font-size: 1.3rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        header p {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: bold;
+            margin: 15px 0 8px 5px;
+            color: var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 食材卡片 */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 8px;
+        }
+
+        .card-title {
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .delete-btn {
+            background: #FF6B6B;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        /* 表單排版 */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        label {
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        input {
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background-color: #FCFAF8;
+            -webkit-appearance: none;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: #white;
+        }
+
+        .row-cost {
+            text-align: right;
+            font-size: 0.85rem;
+            color: var(--accent);
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        /* 按鈕 */
+        .btn-add {
+            background-color: var(--secondary);
+            border: 2px dashed var(--primary);
+            color: var(--primary);
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+
+        .btn-add:active {
+            background-color: #EADCD3;
+        }
+
+        /* 參數與定價設定 */
+        .config-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            border: 1px solid var(--border);
+        }
+
+        .slider-group {
+            margin-bottom: 15px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary);
+        }
+
+        /* 結果顯示 */
+        .result-panel {
+            background-color: var(--primary);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+            box-shadow: 0 4px 10px rgba(140, 98, 57, 0.3);
+            margin-bottom: 30px;
+        }
+
+        .result-panel * {
+            color: white;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .result-row.total-price {
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding-top: 12px;
+            margin-top: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .price-tag {
+            font-size: 1.5rem;
+            color: #FFD43B !important;
+            font-weight: 900;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🧁 EPOCH 烘焙成本計算器</h1>
+        <p>簡單、直覺、好上手的配方計價小工具</p>
+    </header>
+
+    <div class="section-title">
+        <span>配方食材清單</span>
+    </div>
+
+    <!-- 食材卡片容器 -->
+    <div id="ingredients-container"></div>
+
+    <button class="btn-add" onclick="addIngredient()">＋ 新增配方食材</button>
+
+    <div class="section-title"><span>其他與利潤設定</span></div>
+
+    <div class="config-panel">
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label for="packaging-cost">包材費用 (盒子、紙袋、貼紙等)</label>
+            <input type="number" id="packaging-cost" value="25" oninput="calculateTotal()">
+        </div>
+        <div class="slider-group">
+            <div class="slider-header">
+                <span>期望毛利率</span>
+                <span id="margin-value" style="font-weight: bold; color: var(--accent);">50%</span>
+            </div>
+            <input type="range" id="margin-slider" min="10" max="85" value="50" step="5" oninput="updateMarginValue(this.value)">
+        </div>
+    </div>
+
+    <div class="result-panel">
+        <div class="result-row">
+            <span>食材總成本：</span>
+            <span>$ <span id="total-food-cost">0</span> 元</span>
+        </div>
+        <div class="result-row">
+            <span>包材總成本：</span>
+            <span>$ <span id="total-pack-cost">0</span> 元</span>
+        </div>
+        <div class="result-row">
+            <span>配方總成本 (加5%耗損)：</span>
+            <span>$ <span id="total-cost-with-loss">0</span> 元</span>
+        </div>
+        <div class="result-row total-price">
+            <span>💡 建議零售價：</span>
+            <span><span class="price-tag">$ <span id="suggested-price">0</span></span> 元</span>
+        </div>
+    </div>
+
+    <script>
+        // 初始化預設食材
+        const defaultIngredients = [
+            { name: '日本麵粉', packWeight: 1000, packPrice: 160, usage: 120 },
+            { name: '無鹽奶油', packWeight: 450, packPrice: 180, usage: 100 },
+            { name: '細砂糖', packWeight: 1000, packPrice: 50, usage: 80 },
+            { name: '雞蛋 (顆)', packWeight: 10, packPrice: 80, usage: 3 }
+        ];
+
+        let idCounter = 0;
+
+        // 初始化載入
+        window.onload = function() {
+            defaultIngredients.forEach(ing => {
+                addIngredient(ing.name, ing.packWeight, ing.packPrice, ing.usage);
+            });
+            calculateTotal();
+        };
+
+        // 新增食材卡片
+        function addIngredient(name = '', packWeight = '', packPrice = '', usage = '') {
+            idCounter++;
+            const container = document.getElementById('ingredients-container');
+            
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.id = `card-${idCounter}`;
+            card.innerHTML = `
+                <div class="card-header">
+                    <span class="card-title">📖 食材原料</span>
+                    <button class="delete-btn" onclick="deleteCard(${idCounter})">刪除</button>
+                </div>
+                <div class="grid">
+                    <div class="form-group full-width">
+                        <label>原料名稱</label>
+                        <input type="text" class="ing-name" value="${name}" placeholder="例如：麵粉、奶油">
+                    </div>
+                    <div class="form-group">
+                        <label>包裝規格 (g / ml / 顆)</label>
+                        <input type="number" class="ing-pack-weight" value="${packWeight}" placeholder="例如：1000" oninput="calculateTotal()">
+                    </div>
+                    <div class="form-group">
+                        <label>包裝售價 (元)</label>
+                        <input type="number" class="ing-pack-price" value="${packPrice}" placeholder="例如：150" oninput="calculateTotal()">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>配方用量 (g / ml / 顆)</label>
+                        <input type="number" class="ing-usage" value="${usage}" placeholder="例如：120" oninput="calculateTotal()">
+                    </div>
+                </div>
+                <div class="row-cost">單項成本：$ <span class="ing-cost">0</span> 元</div>
+            `;
+            container.appendChild(card);
+            calculateTotal();
+        }
+
+        // 刪除卡片
+        function deleteCard(id) {
+            const card = document.getElementById(`card-${id}`);
+            if (card) {
+                card.remove();
+                calculateTotal();
+            }
+        }
+
+        // 更新滑桿數字
+        function updateMarginValue(val) {
+            document.getElementById('margin-value').innerText = `${val}%`;
+            calculateTotal();
+        }
+
+        // 核心計算公式
+        function calculateTotal() {
+            let totalFoodCost = 0;
+            const cards = document.querySelectorAll('.card');
+
+            cards.forEach(card => {
+                const packWeight = parseFloat(card.querySelector('.ing-pack-weight').value) || 0;
+                const packPrice = parseFloat(card.querySelector('.ing-pack-price').value) || 0;
+                const usage = parseFloat(card.querySelector('.ing-usage').value) || 0;
+
+                let rowCost = 0;
+                if (packWeight > 0 && packPrice > 0 && usage > 0) {
+                    rowCost = (packPrice / packWeight) * usage;
+                }
+
+                card.querySelector('.ing-cost').innerText = rowCost.toFixed(1);
+                totalFoodCost += rowCost;
+            });
+
+            const packagingCost = parseFloat(document.getElementById('packaging-cost').value) || 0;
+            const margin = parseFloat(document.getElementById('margin-slider').value) / 100;
+
+            // 計入 5% 耗損的食材成本
+            const foodCostWithLoss = totalFoodCost * 1.05;
+            const overallCost = foodCostWithLoss + packagingCost;
+
+            // 定價公式 = 總成本 / (1 - 毛利率)
+            let suggestedPrice = 0;
+            if (margin < 1) {
+                suggestedPrice = overallCost / (1 - margin);
+            }
+
+            // 渲染到畫面上
+            document.getElementById('total-food-cost').innerText = Math.round(totalFoodCost);
+            document.getElementById('total-pack-cost').innerText = Math.round(packagingCost);
+            document.getElementById('total-cost-with-loss').innerText = Math.round(overallCost);
+            document.getElementById('suggested-price').innerText = Math.round(suggestedPrice);
+        }
+    </script>
+</body>
+</html>
